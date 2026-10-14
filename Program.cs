@@ -3,13 +3,15 @@
 class Course
 {
     public Dictionary<int, int> course_availseats = new();
-    public readonly object seatLock = new();   // guards course_availseats across threads
+    public Dictionary<int, object> course_locks = new();
+    //public readonly object seatLock = new();   // guards course_availseats across threads
 
     public Course(int courses = 100, int availseats = 10_000)
     {
         for (int i = 1; i <= courses; i++)
         {
             course_availseats[i] = availseats;
+            course_locks[i] = new object();
         }
     }
 }
@@ -38,14 +40,29 @@ class Student
     public bool RegisterMyCourses()
     {
         bool allRegistered = true;
-        lock (Program.c.seatLock)
+
+        int firstID = courses[0];
+        int secondID = courses[1];
+
+        if(firstID > secondID)
         {
-            foreach (var c in courses)
+            int temp = firstID;
+            firstID = secondID;
+            secondID = temp;
+        }
+
+        lock (Program.c.course_locks[firstID])
+        {
+            //Thread.Sleep(1); //delay to force overlap
+            lock (Program.c.course_locks[secondID])
             {
-                if (Program.c.course_availseats[c] > 0)
-                    Program.c.course_availseats[c]--;
-                else
-                    allRegistered = false;          // course is full
+                foreach (var c in courses)
+                {
+                    if (Program.c.course_availseats[c] > 0)
+                        Program.c.course_availseats[c]--;
+                    else
+                        allRegistered = false;          // course is full
+                }
             }
         }
         return allRegistered;
@@ -67,7 +84,7 @@ class Program
                 for (int i = 1; i <= 1000; i++)
                 {
                     Student s = new Student(i);          // create student
-                    s.SelectCoursesForRegistration(5);   // Student.SelectCoursesForRegistration
+                    s.SelectCoursesForRegistration(2);   // Student.SelectCoursesForRegistration
                     if (s.RegisterMyCourses() == false)               // Student.RegisterMyCourses
                         Console.WriteLine($"Student {s.id} failed to register course list");
                 }

@@ -1,3 +1,4 @@
+1)
 -How are the threads defined?
 Using the Thread constructor, and put into a list.
 
@@ -11,3 +12,24 @@ all threads must finish before Main can continue.
 -Why did I need two different loops to start vs join them?
 The first loop starts all the threads basically at the same time to run on available CPU cores. The seconds waits for them all to finish. 
 If we started and joined them in the same loop, then that would force each thread to finish before the next thread could start.
+
+2)
+-What did it take?
+Two threads needing the same lock the other holds.
+Thread A: picks [4, 12] then locks 4 and waits for 12
+Thread B: picks [12, 4] then locks 12 and waits for 4
+
+-What determines a deadlock's existence?
+When two or more threads become permanently blocked, waiting for something (like a lock) held by another
+
+3)
+-What options do you have?
+1. Order them so that every thread gets their locks in the exact same sequence (ascending numbers)
+2. Go back to to using one lock like before.
+
+-What option did you code?
+1, because it's the only one I could think of that wouldn't remove the lock
+
+-How do you know it won't ever deadlock again?
+If thread A needs course 4 and course 12, it needs to request course 4 first. 
+Because they go in order it cannot form a cycle where they depend on one another, so a deadlock cannot form.
